@@ -1,0 +1,135 @@
+/* Fondo general en gris oscuro */
+.root {
+    -fx-background-color: #1c1c1c; /* Fondo gris oscuro */
+}
+
+/* Contenedores principales (VBox, HBox) */
+.vbox, .hbox {
+    -fx-spacing: 15; /* Espaciado entre los elementos dentro del contenedor */
+    -fx-padding: 20; /* Espaciado interno entre el borde del contenedor y su contenido */
+    -fx-background-color: #2b2b2b; /* Fondo ligeramente más claro para los contenedores */
+    -fx-border-color: #444444; /* Borde gris oscuro */
+    -fx-border-radius: 10; /* Bordes redondeados */
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 8, 0, 0, 3);
+    -fx-alignment: center; /* Centrar el contenido dentro del contenedor */
+}
+
+/* Títulos */
+.title-label {
+    -fx-text-fill: #e0e0e0; /* Texto gris claro */
+    -fx-font-size: 24px; /* Tamaño de fuente grande para destacar */
+    -fx-font-weight: bold; /* Texto en negrita */
+    -fx-padding: 10 0; /* Espaciado vertical alrededor del título */
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 5, 0, 0, 1); /* Sombra para dar énfasis */
+}
+
+/* Tablas */
+.table-view {
+    -fx-background-color: #2b2b2b; /* Fondo de la tabla en gris oscuro */
+    -fx-border-color: #555555; /* Borde en gris medio */
+    -fx-border-radius: 5; /* Bordes redondeados */
+    -fx-table-cell-border-color: #444444; /* Líneas entre las celdas de la tabla */
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 5, 0, 0, 2); /* Sombra para la tabla */
+}
+
+.table-view .column-header {
+    -fx-background-color: linear-gradient(to bottom, #1db954, #14833b); /* Fondo degradado en tonos verdes */
+    -fx-text-fill: white; /* Texto blanco */
+    -fx-font-weight: bold; /* Texto en negrita */
+    -fx-font-size: 15px; /* Tamaño del texto */
+    -fx-padding: 10px; /* Espaciado interno de los encabezados */
+    -fx-border-width: 0 0 2 0; /* Línea inferior del encabezado */
+    -fx-border-color: #0f5d2b; /* Color del borde inferior */
+}
+
+.table-view .cell {
+    -fx-background-color: #2e2e2e; /* Fondo de las celdas en gris medio */
+    -fx-text-fill: #d0d0d0; /* Texto en gris claro */
+    -fx-font-size: 14px; /* Tamaño de texto de las celdas */
+    -fx-padding: 8px; /* Espaciado interno de las celdas */
+}
+
+.table-view .cell:selected {
+    -fx-background-color: #1db954; /* Fondo verde para celdas seleccionadas */
+    -fx-text-fill: white; /* Texto en blanco para celdas seleccionadas */
+}
+
+/* Campos de texto */
+.text-field, .password-field {
+    -fx-background-color: #2b2b2b;
+    -fx-text-fill: #d0d0d0;
+    -fx-border-color: #444444;
+    -fx-border-radius: 5;
+    -fx-padding: 10;
+    -fx-font-size: 14px;
+}
+
+.text-field:focused, .password-field:focused {
+    -fx-border-color: #888888; /* Bordes más claros al enfocar */
+    -fx-border-width: 2;
+}
+
+/* Botones */
+.button {
+    -fx-background-color: #1db954; /* Fondo verde brillante */
+    -fx-text-fill: white; /* Texto en blanco */
+    -fx-font-weight: bold; /* Texto en negrita */
+    -fx-background-radius: 20; /* Bordes redondeados */
+    -fx-border-radius: 20; /* Bordes redondeados */
+    -fx-padding: 8px 20px; /* Espaciado interno */
+    -fx-border-color: #088726; /* Borde verde oscuro */
+    -fx-border-width: 1;
+}
+
+.button:hover {
+    -fx-background-color: #14833b; /* Verde más oscuro al pasar el mouse */
+}
+
+.button:pressed {
+    -fx-background-color: #0f5d2b; /* Verde aún más oscuro al presionar */
+}
+
+/* Etiquetas */
+.label {
+    -fx-text-fill: #d0d0d0; /* Texto gris claro */
+    -fx-font-size: 18px; /* Tamaño del texto */
+    -fx-font-weight: bold; /* Texto en negrita */
+}
+
+/* Enlaces o etiquetas clicables */
+.create-account-label {
+    -fx-text-fill: #d0d0d0; /* Texto en gris claro */
+    -fx-underline: true; /* Texto subrayado */
+    -fx-cursor: hand; /* Cambia el cursor al pasar el mouse */
+}
+
+.create-account-label:hover {
+    -fx-text-fill: #f0f0f0; /* Texto en blanco al pasar el mouse */
+}
+
+/* DatePicker */
+.date-picker {
+    -fx-background-color: #2b2b2b; /* Fondo en gris oscuro */
+    -fx-border-color: #444444; /* Bordes en gris oscuro */
+    -fx-border-radius: 5; /* Bordes redondeados */
+    -fx-padding: 5px; /* Espaciado interno */
+    -fx-font-size: 14px; /* Tamaño del texto */
+}
+
+.date-picker:focused {
+    -fx-border-color: #1db954; /* Borde verde para consistencia */
+    -fx-border-width: 2;
+}
+
+/* Ventanas de diálogo */
+.dialog-pane {
+    -fx-background-color: #2b2b2b; /* Fondo en gris oscuro */
+    -fx-border-color: #444444; /* Bordes en gris oscuro */
+    -fx-border-radius: 10; /* Bordes redondeados */
+    -fx-padding: 15; /* Espaciado interno */
+}
+
+.dialog-pane .content-label {
+    -fx-text-fill: #d0d0d0; /* Texto en gris claro */
+    -fx-font-size: 14px; /* Tamaño del texto */
+}

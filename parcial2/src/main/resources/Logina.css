@@ -1,0 +1,66 @@
+/* Fondo negro para toda la ventana */
+.root {
+    -fx-background-color: #000000; /* Fondo completamente negro */
+}
+
+/* Estilos específicos para el LoginScreen */
+.login-screen {
+    -fx-background-color: #191414; /* Fondo ligeramente distinto para el VBox */
+    -fx-padding: 30px;
+    -fx-alignment: center;
+}
+
+/* Título */
+.login-screen .title-label {
+    -fx-text-fill: white;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 0;
+}
+
+/* Imagen del logo */
+.login-screen .image-view {
+    -fx-margin-bottom: 20px;
+}
+
+/* Campos de texto */
+.login-screen .text-field, .login-screen .password-field {
+    -fx-background-color: #282828;
+    -fx-text-fill: white;
+    -fx-border-color: #333;
+    -fx-border-radius: 5;
+    -fx-padding: 10;
+    -fx-font-size: 14px;
+}
+
+.login-screen .text-field:focused, .login-screen .password-field:focused {
+    -fx-border-color: #1db954;
+    -fx-border-width: 2;
+}
+
+/* Botón de inicio de sesión */
+.login-screen .login-button {
+    -fx-background-color: #1db954;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.login-screen .login-button:hover {
+    -fx-background-color: #14833b;
+}
+
+/* Etiqueta de registro */
+.login-screen .create-account-label {
+    -fx-text-fill: white;
+    -fx-underline: true;
+    -fx-cursor: hand;
+}
+
+/* Cambiar a verde claro al pasar el cursor */
+.login-screen .create-account-label:hover {
+    -fx-text-fill: #93fc93; /* Verde claro */
+}
+
+
+
+
