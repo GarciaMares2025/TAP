@@ -2,222 +2,118 @@ package org.example.parcial2.views.admi;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.example.parcial2.utils.Database;
 
+import java.util.List;
+
+/**
+ * Pantalla que muestra todas las canciones disponibles (incluso sin filtrar por álbum).
+ */
 public class AdminCancionesScreen {
 
     private final Stage stage;
-    private final Database db;
+    private final int userId;
     private final TableView<String[]> songTable;
 
-    public AdminCancionesScreen(Stage stage) {
+    /** Constructor principal con Stage + userId */
+    public AdminCancionesScreen(Stage stage, int userId) {
         this.stage = stage;
-        this.db = Database.getInstance();
+        this.userId = userId;
         this.songTable = new TableView<>();
     }
 
+    /** Sobrecarga: constructor que sólo recibe Stage */
+    public AdminCancionesScreen(Stage stage) {
+        this(stage, -1);
+    }
+
+    /** Muestra la pantalla de listado de canciones */
     public void show() {
-        Label label = new Label("Administración de Canciones");
+        Label titleLabel = new Label("Listado de Canciones");
+        titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;");
 
-        // Botón Regresar
-        Button backButton = new Button("Regresar");
-        backButton.setOnAction(e -> new AdminScreen(stage).show());
-
-        // Contenedor para colocar el botón en la esquina superior derecha
-        HBox topBar = new HBox();
-        topBar.getChildren().add(backButton);
-        topBar.setStyle("-fx-alignment: top-right; -fx-padding: 10;");
-
-        // Campos para ingresar datos de la canción
-        TextField tituloField = new TextField();
-        tituloField.setPromptText("Título de la canción");
-
-        TextField duracionField = new TextField();
-        duracionField.setPromptText("Duración (HH:MM:SS)");
-
-        // ComboBox para seleccionar género
-        ComboBox<String[]> generoBox = new ComboBox<>(FXCollections.observableArrayList(db.getAllGenres()));
-        generoBox.setPromptText("Seleccione el género");
-        generoBox.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(String[] item, boolean empty) {
-                super.updateItem(item, empty);
-                setText((item == null || empty) ? null : item[1]); // Mostrar el nombre del género
-            }
-        });
-        generoBox.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(String[] item, boolean empty) {
-                super.updateItem(item, empty);
-                setText((item == null || empty) ? null : item[1]); // Mostrar el nombre del género
-            }
-        });
-
-        // ComboBox para seleccionar artista
-        ComboBox<String[]> artistaBox = new ComboBox<>(FXCollections.observableArrayList(db.getAllArtists()));
-        artistaBox.setPromptText("Seleccione el artista");
-        artistaBox.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(String[] item, boolean empty) {
-                super.updateItem(item, empty);
-                setText((item == null || empty) ? null : item[1]); // Mostrar el nombre del artista
-            }
-        });
-        artistaBox.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(String[] item, boolean empty) {
-                super.updateItem(item, empty);
-                setText((item == null || empty) ? null : item[1]); // Mostrar el nombre del artista
-            }
-        });
-
-        // ComboBox para seleccionar álbum
-        ComboBox<String[]> albumBox = new ComboBox<>(FXCollections.observableArrayList(db.getAllAlbums()));
-        albumBox.setPromptText("Seleccione el álbum");
-        albumBox.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(String[] item, boolean empty) {
-                super.updateItem(item, empty);
-                setText((item == null || empty) ? null : item[1]); // Mostrar el nombre del álbum
-            }
-        });
-        albumBox.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(String[] item, boolean empty) {
-                super.updateItem(item, empty);
-                setText((item == null || empty) ? null : item[1]); // Mostrar el nombre del álbum
-            }
-        });
-
-
-        // Gráfico de pastel para mostrar las canciones por artista
-        PieChart pieChart = new PieChart();
-        updatePieChart(pieChart);
-
-        Button addButton = new Button("Añadir canción");
-        addButton.setOnAction(e -> {
-            try {
-                String titulo = tituloField.getText();
-                String duracion = duracionField.getText();
-                int generoId = Integer.parseInt(generoBox.getValue()[0]);
-                int artistaId = Integer.parseInt(artistaBox.getValue()[0]);
-                int albumId = Integer.parseInt(albumBox.getValue()[0]);
-
-                if (db.addSong(titulo, duracion, generoId, artistaId, albumId)) {
-                    loadSongs();
-                    updatePieChart(pieChart);
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Canción añadida exitosamente.");
-                    alert.showAndWait();
-                } else {
-                    Alert alert = new Alert(Alert.AlertType.ERROR, "No se pudo añadir la canción.");
-                    alert.showAndWait();
-                }
-
-                tituloField.clear();
-                duracionField.clear();
-                generoBox.setValue(null);
-                artistaBox.setValue(null);
-                albumBox.setValue(null);
-
-            } catch (NumberFormatException ex) {
-                Alert alert = new Alert(Alert.AlertType.ERROR, "Ingrese un valor válido para los campos.");
-                alert.showAndWait();
-            }
-        });
-
-        // Campo y botón para eliminar canciones por ID
-        TextField eliminarIdField = new TextField();
-        eliminarIdField.setPromptText("ID de la canción a eliminar");
-
-        Button deleteButton = new Button("Eliminar canción");
-        deleteButton.setOnAction(e -> {
-            try {
-                int id = Integer.parseInt(eliminarIdField.getText()); // Validar ID
-
-                // Verificar si la canción existe
-                if (!db.doesSongExist(id)) {
-                    Alert alert = new Alert(Alert.AlertType.ERROR, "El ID especificado no existe en la base de datos.");
-                    alert.showAndWait();
-                    return;
-                }
-
-                // Intentar eliminar la canción
-                if (db.deleteSongById(id)) {
-                    loadSongs(); // Actualizar tabla
-                    updatePieChart(pieChart); // Actualizar gráfico
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Canción eliminada exitosamente.");
-                    alert.showAndWait();
-                } else {
-                    Alert alert = new Alert(Alert.AlertType.ERROR, "No se pudo eliminar la canción.");
-                    alert.showAndWait();
-                }
-            } catch (NumberFormatException ex) {
-                Alert alert = new Alert(Alert.AlertType.ERROR, "Ingrese un ID válido.");
-                alert.showAndWait();
-            }
-
-            eliminarIdField.clear(); // Limpiar campo de texto
-        });
-
-
-        // Configuración de la tabla de canciones
+        // Columnas de la tabla: {idCancion, titulo, duracion, nombreAlbum}
         TableColumn<String[], String> idCol = new TableColumn<>("ID");
-        idCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue()[0]));
+        idCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue()[0]));
+        idCol.setPrefWidth(60);
 
         TableColumn<String[], String> tituloCol = new TableColumn<>("Título");
-        tituloCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue()[1]));
+        tituloCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue()[1]));
+        tituloCol.setPrefWidth(180);
 
-        TableColumn<String[], String> duracionCol = new TableColumn<>("Duración (HH:MM:SS)");
-        duracionCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue()[2]));
-
-        TableColumn<String[], String> generoCol = new TableColumn<>("Género");
-        generoCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue()[3]));
-
-        TableColumn<String[], String> artistaCol = new TableColumn<>("Artista");
-        artistaCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue()[4]));
+        TableColumn<String[], String> duracionCol = new TableColumn<>("Duración");
+        duracionCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue()[2]));
+        duracionCol.setPrefWidth(100);
 
         TableColumn<String[], String> albumCol = new TableColumn<>("Álbum");
-        albumCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue()[5]));
+        albumCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue().length > 3 ? cellData.getValue()[3] : "N/A"));
+        albumCol.setPrefWidth(140);
 
-        songTable.getColumns().addAll(idCol, tituloCol, duracionCol, generoCol, artistaCol, albumCol);
-        loadSongs();
+        songTable.getColumns().clear();
+        songTable.getColumns().addAll(idCol, tituloCol, duracionCol, albumCol);
+        songTable.setPrefHeight(300);
 
-        VBox leftPanel = new VBox(10, label, tituloField, duracionField, generoBox, artistaBox, albumBox, addButton, eliminarIdField, deleteButton, songTable);
-        leftPanel.setStyle("-fx-alignment: center;"); // Centrar contenido horizontalmente
-        VBox rightPanel = new VBox(10, new Label("Gráfico de Canciones por Artista"), pieChart);
+        loadAllSongs();
 
-        HBox mainLayout = new HBox(20, leftPanel, rightPanel);
-        VBox finalLayout = new VBox(topBar, mainLayout);
-        VBox.setVgrow(mainLayout, Priority.ALWAYS);
+        // Label para mostrar el total de canciones
+        Label totalLabel = new Label();
+        totalLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
+        updateTotalLabel(totalLabel);
 
-        Scene scene = new Scene(finalLayout, 1300, 700);
+        Button backButton = new Button("← Regresar");
+        backButton.setPrefSize(120, 35);
+        backButton.setOnAction(e -> new AdminScreen(stage, userId).show());
+
+        VBox root = new VBox(15,
+                titleLabel,
+                songTable,
+                totalLabel,
+                backButton
+        );
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(20));
+        root.setStyle("-fx-background-color: #121212;");
+
+        Scene scene = new Scene(root, 520, 580);
         scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
         stage.setScene(scene);
-        stage.setTitle("Admin - Canciones");
+        stage.setTitle("Administrar Canciones");
         stage.show();
     }
 
-    private void loadSongs() {
-        ObservableList<String[]> songs = FXCollections.observableArrayList(db.getAllSongsWithDetails());
-        songTable.setItems(songs);
-    }
-
-    private void updatePieChart(PieChart pieChart) {
-        ObservableList<PieChart.Data> chartData = FXCollections.observableArrayList();
-        for (String[] entry : db.getSongsCountByArtist()) {
-            int total = Integer.parseInt(entry[1]);
-            chartData.add(new PieChart.Data(entry[0] + " (" + total + ")", total)); // Añadir texto con conteo
+    /** Carga todas las canciones desde la base de datos */
+    private void loadAllSongs() {
+        try {
+            List<String[]> lista = Database.getInstance().getAllSongs();
+            ObservableList<String[]> data = FXCollections.observableArrayList(lista);
+            songTable.setItems(data);
+        } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText(null);
+            alert.setContentText("Error al cargar las canciones: " + e.getMessage());
+            alert.showAndWait();
+            e.printStackTrace();
         }
-        pieChart.setData(chartData);
-        pieChart.setLabelsVisible(true); // Mostrar etiquetas
-        pieChart.setLegendVisible(true); // Mostrar leyenda
     }
 
+    /** Actualiza el label con el total de canciones */
+    private void updateTotalLabel(Label label) {
+        try {
+            int total = songTable.getItems().size();
+            label.setText("Total de canciones: " + total);
+        } catch (Exception e) {
+            label.setText("Error al obtener el total de canciones.");
+        }
+    }
 }

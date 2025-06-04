@@ -2,14 +2,17 @@ package org.example.parcial2.utils;
 
 import org.example.parcial2.models.User;
 
+import java.math.BigDecimal;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.io.IOException;
-
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -22,8 +25,8 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 public class Database {
     private static Database instancia;// <-- Singleton instance
     private final String url      = "jdbc:mysql://localhost:3306/spotify";
-    private final String user     = "root";
-    private final String password = "Hola123";
+    private final String user     = "-----";
+    private final String password = "------";
 
     private Database() {
         try {
@@ -47,7 +50,7 @@ public class Database {
     }
 
 
-    // Métodos para manejo de usuarios
+    //* Métodos para manejo de usuarios
     public boolean authenticateUser(String username, String pass) {
         String sql = "SELECT * FROM Usuarios WHERE User = ? AND password = ?";
         try (Connection conn = getConnection();
@@ -126,6 +129,7 @@ public class Database {
             return false;
         }
     }
+
 
     public void createUser(String name, String phone, String email, String username, String password, String role) {
         if (isUserExists(username)) {
@@ -340,12 +344,16 @@ public class Database {
     // Métodos para manejar artistas
     public List<String[]> getAllArtists() {
         List<String[]> artists = new ArrayList<>();
-        String query = "SELECT idArtista, nombreArtista FROM Artista";
+        String query = "SELECT idArtista, nombreArtista, nacionalidad FROM Artista";
         try (Connection conn = Database.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                artists.add(new String[]{String.valueOf(rs.getInt("idArtista")), rs.getString("nombreArtista")});
+                artists.add(new String[]{
+                        String.valueOf(rs.getInt("idArtista")),
+                        rs.getString("nombreArtista"),
+                        rs.getString("nacionalidad")
+                });
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -457,7 +465,7 @@ public class Database {
 
 
 
-    public List<String[]> getAllSongsWithDetails() {
+    public List<String[]> getAllSongs() {
         List<String[]> songs = new ArrayList<>();
         String query = """
                 SELECT c.idCancion, c.titulo, c.duracion, g.nombreGenero, a.nombreArtista, al.nombreAlbum
@@ -945,22 +953,25 @@ public class Database {
     public List<String[]> getHistorialCompras(int userId) {
         List<String[]> historial = new ArrayList<>();
         String query = """
-            SELECT v.fechaVenta, v.totalVenta, 'Compra' AS tipo, v.idVenta 
-            FROM Venta v 
-            WHERE v.idUser = ? 
-            ORDER BY v.fechaVenta DESC
-        """;
+        SELECT v.fechaVenta, v.totalVenta, 'Compra' AS tipo, v.idVenta 
+        FROM Venta v 
+        WHERE v.idUser = ? 
+        ORDER BY v.fechaVenta DESC
+    """;
         try (Connection conn = Database.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, userId);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                historial.add(new String[]{
+                String[] row = new String[]{
                         rs.getString("fechaVenta"),
                         rs.getString("totalVenta"),
                         rs.getString("tipo"),
                         String.valueOf(rs.getInt("idVenta"))
-                });
+                };
+                // Debug: imprimir los valores
+                System.out.println("Historial row: " + Arrays.toString(row));
+                historial.add(row);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -1045,6 +1056,8 @@ public class Database {
         }
         return null;
     }
+
+
 
 
 
@@ -1246,6 +1259,639 @@ public class Database {
         }
         return 0;
     }
+
+
+    /**
+     * Obtiene el total de canciones vendidas con sus estadísticas
+     * Retorna una lista de arrays de String con: [idCancion, titulo, totalVendidas]
+     */
+    /**
+    public List<String[]> getTotalSongsSold() {
+        List<String[]> resultado = new ArrayList<>();
+
+        try (Connection conn = getConnection()) {
+
+            // PASO 1: Verificar si hay canciones
+            String checkCanciones = "SELECT COUNT(*) as total FROM cancion";
+            try (PreparedStatement stmt = conn.prepareStatement(checkCanciones);
+                 ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int totalCanciones = rs.getInt("total");
+                    System.out.println("Total de canciones en BD: " + totalCanciones);
+                    if (totalCanciones == 0) {
+                        System.out.println("No hay canciones en la base de datos");
+                        return resultado; // Lista vacía
+                    }
+                }
+            }
+
+            // PASO 2: Verificar si hay ventas
+            String checkVentas = "SELECT COUNT(*) as total FROM venta";
+            try (PreparedStatement stmt = conn.prepareStatement(checkVentas);
+                 ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int totalVentas = rs.getInt("total");
+                    System.out.println("Total de ventas en BD: " + totalVentas);
+                    if (totalVentas == 0) {
+                        System.out.println("No hay ventas en la base de datos");
+                        return resultado; // Lista vacía
+                    }
+                }
+            }
+
+            // PASO 3: Verificar la relación entre tablas
+            String checkRelacion = "SELECT c.idCancion, c.titulo, v.idVenta, v.totalVenta " +
+                    "FROM cancion c " +
+                    "LEFT JOIN venta v ON c.idCancion = v.idCancion " +
+                    "LIMIT 5";
+
+            System.out.println("Verificando relación cancion-venta:");
+            try (PreparedStatement stmt = conn.prepareStatement(checkRelacion);
+                 ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    System.out.println("Canción ID: " + rs.getInt("idCancion") +
+                            ", Título: " + rs.getString("titulo") +
+                            ", Venta ID: " + rs.getObject("idVenta") +
+                            ", Total: " + rs.getObject("totalVenta"));
+                }
+            }
+
+            // PASO 4: Consulta principal corregida
+            String sql = "SELECT c.idCancion, c.titulo, " +
+                    "COALESCE(SUM(v.totalVenta), 0) as totalVendidas, " +
+                    "COUNT(v.idVenta) as cantidadVentas " +
+                    "FROM cancion c " +
+                    "LEFT JOIN venta v ON c.idCancion = v.idCancion " +
+                    "GROUP BY c.idCancion, c.titulo " +
+                    "HAVING COALESCE(SUM(v.totalVenta), 0) > 0 " +
+                    "ORDER BY totalVendidas DESC";
+
+            try (PreparedStatement stmt = conn.prepareStatement(sql);
+                 ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+                    String[] fila = new String[3];
+                    fila[0] = String.valueOf(rs.getInt("idCancion"));
+                    fila[1] = rs.getString("titulo");
+                    fila[2] = String.format("%.2f", rs.getDouble("totalVendidas"));
+
+                    resultado.add(fila);
+                    System.out.println("Agregado: " + fila[0] + " - " + fila[1] + " - " + fila[2]);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error SQL: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        System.out.println("Total de registros encontrados: " + resultado.size());
+        return resultado;
+    }*/
+
+    // Método para agregar en la clase Database
+
+
+
+    /**
+     * Obtiene el total de unidades compradas por un usuario
+     * @param userId ID del usuario
+     * @return Total de unidades compradas
+     */
+    public int getTotalUnidadesCompradasPorUsuario(int userId) {
+        String query = "SELECT SUM(cantidad) as total FROM compras WHERE id_usuario = ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("total");
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al obtener total de unidades: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    /**
+     * Obtiene el total de canciones vendidas en todo el sistema (para AdminTotalCancionesVendidas)
+     * @return Total de canciones vendidas
+     */
+    // Método corregido para obtener total de canciones vendidas
+    public int getTotalCancionesVendidas() {
+        String query = "SELECT COUNT(*) as total FROM Detalle_Venta";
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("total");
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al obtener total de canciones vendidas: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    // Método que falta: getTotalSongsSold()
+// Obtiene estadísticas de ventas por canción
+    public List<String[]> getTotalSongsSold() {
+        List<String[]> stats = new ArrayList<>();
+        String query = """
+        SELECT 
+            c.idCancion, 
+            c.titulo, 
+            COUNT(dv.idCancion) as cantidadVentas
+        FROM Cancion c
+        LEFT JOIN Detalle_Venta dv ON c.idCancion = dv.idCancion
+        GROUP BY c.idCancion, c.titulo
+        ORDER BY cantidadVentas DESC
+        """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                stats.add(new String[]{
+                        String.valueOf(rs.getInt("idCancion")),
+                        rs.getString("titulo"),
+                        String.valueOf(rs.getInt("cantidadVentas"))
+                });
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener estadísticas de ventas: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return stats;
+    }
+
+    //* Método alternativo si quieres solo las canciones que SÍ tienen ventas
+    public List<String[]> getTotalSongsSoldOnly() {
+        List<String[]> stats = new ArrayList<>();
+        String query = """
+        SELECT
+            c.idCancion,
+            c.titulo, 
+            COUNT(dv.idCancion) as cantidadVentas
+        FROM Cancion c
+        INNER JOIN Detalle_Venta dv ON c.idCancion = dv.idCancion
+        GROUP BY c.idCancion, c.titulo
+        ORDER BY cantidadVentas DESC
+        """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                stats.add(new String[]{
+                        String.valueOf(rs.getInt("idCancion")),
+                        rs.getString("titulo"),
+                        String.valueOf(rs.getInt("cantidadVentas"))
+                });
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener estadísticas de ventas: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return stats;
+    }
+
+
+    /**
+     * Obtiene estadísticas detalladas de compras por usuario
+     * @param userId ID del usuario
+     * @return Array con: [total_compras, total_unidades, total_gastado, cancion_mas_comprada]
+     */
+    public String[] getEstadisticasComprasUsuario(int userId) {
+        String[] estadisticas = new String[4];
+
+        // Total de compras (transacciones)
+        String queryCompras = "SELECT COUNT(*) as total FROM compras WHERE id_usuario = ?";
+
+        // Total gastado
+        String queryGastado = "SELECT SUM(precio_total) as total FROM compras WHERE id_usuario = ?";
+
+        // Canción más comprada
+        String queryCancionFavorita = """
+        SELECT s.titulo, SUM(c.cantidad) as total_cantidad
+        FROM compras c
+        INNER JOIN canciones s ON c.id_cancion = s.id_cancion
+        WHERE c.id_usuario = ?
+        GROUP BY c.id_cancion, s.titulo
+        ORDER BY total_cantidad DESC
+        LIMIT 1
+    """;
+
+        try (Connection conn = getConnection()) {
+
+            // Total compras
+            try (PreparedStatement stmt = conn.prepareStatement(queryCompras)) {
+                stmt.setInt(1, userId);
+                ResultSet rs = stmt.executeQuery();
+                estadisticas[0] = rs.next() ? String.valueOf(rs.getInt("total")) : "0";
+            }
+
+            // Total unidades
+            estadisticas[1] = String.valueOf(getTotalUnidadesCompradasPorUsuario(userId));
+
+            // Total gastado
+            try (PreparedStatement stmt = conn.prepareStatement(queryGastado)) {
+                stmt.setInt(1, userId);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    estadisticas[2] = String.format("%.2f", rs.getDouble("total"));
+                } else {
+                    estadisticas[2] = "0.00";
+                }
+            }
+
+            // Canción más comprada
+            try (PreparedStatement stmt = conn.prepareStatement(queryCancionFavorita)) {
+                stmt.setInt(1, userId);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    estadisticas[3] = rs.getString("titulo") + " (" + rs.getInt("total_cantidad") + " unidades)";
+                } else {
+                    estadisticas[3] = "Sin compras";
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al obtener estadísticas: " + e.getMessage());
+            e.printStackTrace();
+            // Valores por defecto en caso de error
+            estadisticas[0] = "Error";
+            estadisticas[1] = "Error";
+            estadisticas[2] = "Error";
+            estadisticas[3] = "Error";
+        }
+
+        return estadisticas;
+    }
+
+    /**
+     * Obtiene el historial completo de compras de un usuario específico
+     * Incluye información detallada de cada compra con datos de la canción
+     *
+     * @param userId ID del usuario del cual obtener el historial
+     * @return Lista de arrays donde cada array contiene:
+     *         [0] = ID de la compra
+     *         [1] = Título de la canción
+     *         [2] = Cantidad/Unidades compradas
+     *         [3] = Fecha de compra (formato: YYYY-MM-DD HH:MM:SS)
+     *         [4] = Precio total de la compra
+     *         [5] = Precio unitario (opcional)
+     *         [6] = Artista (opcional)
+     */
+    public List<String[]> getHistorialComprasUsuario(int userId) {
+        List<String[]> historial = new ArrayList<>();
+
+        String query = """
+        SELECT 
+            c.id_compra,
+            s.titulo AS titulo_cancion,
+            c.cantidad,
+            c.fecha_compra,
+            c.precio_total,
+            s.precio AS precio_unitario,
+            s.artista
+        FROM compras c
+        INNER JOIN canciones s ON c.id_cancion = s.id_cancion
+        WHERE c.id_usuario = ?
+        ORDER BY c.fecha_compra DESC
+    """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String[] compra = new String[7];
+
+                    // ID de la compra
+                    compra[0] = String.valueOf(rs.getInt("id_compra"));
+
+                    // Título de la canción
+                    compra[1] = rs.getString("titulo_cancion") != null ?
+                            rs.getString("titulo_cancion") : "Sin título";
+
+                    // Cantidad comprada
+                    compra[2] = String.valueOf(rs.getInt("cantidad"));
+
+                    // Fecha de compra formateada
+                    java.sql.Timestamp timestamp = rs.getTimestamp("fecha_compra");
+                    if (timestamp != null) {
+                        // Formatear fecha para mejor presentación
+                        java.time.LocalDateTime dateTime = timestamp.toLocalDateTime();
+                        java.time.format.DateTimeFormatter formatter =
+                                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+                        compra[3] = dateTime.format(formatter);
+                    } else {
+                        compra[3] = "Fecha no disponible";
+                    }
+
+                    // Precio total
+                    double precioTotal = rs.getDouble("precio_total");
+                    compra[4] = String.format("%.2f", precioTotal);
+
+                    // Precio unitario (opcional - útil para verificaciones)
+                    double precioUnitario = rs.getDouble("precio_unitario");
+                    compra[5] = String.format("%.2f", precioUnitario);
+
+                    // Artista (opcional)
+                    compra[6] = rs.getString("artista") != null ?
+                            rs.getString("artista") : "Artista desconocido";
+
+                    historial.add(compra);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al obtener historial de compras para usuario " + userId + ": " + e.getMessage());
+            e.printStackTrace();
+
+            // En caso de error, agregar una entrada que indique el problema
+            String[] errorEntry = new String[7];
+            errorEntry[0] = "ERROR";
+            errorEntry[1] = "Error al cargar datos";
+            errorEntry[2] = "0";
+            errorEntry[3] = "N/A";
+            errorEntry[4] = "0.00";
+            errorEntry[5] = "0.00";
+            errorEntry[6] = "N/A";
+            historial.add(errorEntry);
+        }
+
+        return historial;
+    }
+
+    /**
+     * Versión simplificada del historial (solo datos esenciales)
+     * Útil cuando no necesitas toda la información completa
+     *
+     * @param userId ID del usuario
+     * @return Lista de arrays con: [id_compra, titulo, cantidad, fecha, precio_total]
+     */
+    public List<String[]> getHistorialComprasUsuarioSimple(int userId) {
+        List<String[]> historial = new ArrayList<>();
+
+        String query = """
+        SELECT 
+            c.id_compra,
+            s.titulo,
+            c.cantidad,
+            DATE_FORMAT(c.fecha_compra, '%d/%m/%Y %H:%i') as fecha_formateada,
+            c.precio_total
+        FROM compras c
+        INNER JOIN canciones s ON c.id_cancion = s.id_cancion
+        WHERE c.id_usuario = ?
+        ORDER BY c.fecha_compra DESC
+    """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String[] compra = new String[5];
+                    compra[0] = String.valueOf(rs.getInt("id_compra"));
+                    compra[1] = rs.getString("titulo");
+                    compra[2] = String.valueOf(rs.getInt("cantidad"));
+                    compra[3] = rs.getString("fecha_formateada");
+                    compra[4] = String.format("%.2f", rs.getDouble("precio_total"));
+
+                    historial.add(compra);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al obtener historial simple: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return historial;
+    }
+
+    /**
+     * Obtiene el historial con filtros adicionales
+     *
+     * @param userId ID del usuario
+     * @param fechaInicio Fecha de inicio del rango (puede ser null)
+     * @param fechaFin Fecha fin del rango (puede ser null)
+     * @param tituloCancion Filtro por título de canción (puede ser null)
+     * @return Lista filtrada del historial
+     */
+    public List<String[]> getHistorialComprasUsuarioFiltrado(int userId,
+                                                             String fechaInicio,
+                                                             String fechaFin,
+                                                             String tituloCancion) {
+        List<String[]> historial = new ArrayList<>();
+
+        StringBuilder queryBuilder = new StringBuilder("""
+        SELECT 
+            c.id_compra,
+            s.titulo,
+            c.cantidad,
+            c.fecha_compra,
+            c.precio_total,
+            s.artista
+        FROM compras c
+        INNER JOIN canciones s ON c.id_cancion = s.id_cancion
+        WHERE c.id_usuario = ?
+    """);
+
+        // Agregar filtros dinámicamente
+        if (fechaInicio != null && !fechaInicio.trim().isEmpty()) {
+            queryBuilder.append(" AND c.fecha_compra >= ?");
+        }
+        if (fechaFin != null && !fechaFin.trim().isEmpty()) {
+            queryBuilder.append(" AND c.fecha_compra <= ?");
+        }
+        if (tituloCancion != null && !tituloCancion.trim().isEmpty()) {
+            queryBuilder.append(" AND s.titulo LIKE ?");
+        }
+
+        queryBuilder.append(" ORDER BY c.fecha_compra DESC");
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(queryBuilder.toString())) {
+
+            int paramIndex = 1;
+            stmt.setInt(paramIndex++, userId);
+
+            if (fechaInicio != null && !fechaInicio.trim().isEmpty()) {
+                stmt.setString(paramIndex++, fechaInicio);
+            }
+            if (fechaFin != null && !fechaFin.trim().isEmpty()) {
+                stmt.setString(paramIndex++, fechaFin + " 23:59:59");
+            }
+            if (tituloCancion != null && !tituloCancion.trim().isEmpty()) {
+                stmt.setString(paramIndex++, "%" + tituloCancion + "%");
+            }
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String[] compra = new String[6];
+                    compra[0] = String.valueOf(rs.getInt("id_compra"));
+                    compra[1] = rs.getString("titulo");
+                    compra[2] = String.valueOf(rs.getInt("cantidad"));
+
+                    // Formatear fecha
+                    java.sql.Timestamp timestamp = rs.getTimestamp("fecha_compra");
+                    if (timestamp != null) {
+                        java.time.LocalDateTime dateTime = timestamp.toLocalDateTime();
+                        java.time.format.DateTimeFormatter formatter =
+                                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+                        compra[3] = dateTime.format(formatter);
+                    } else {
+                        compra[3] = "N/A";
+                    }
+
+                    compra[4] = String.format("%.2f", rs.getDouble("precio_total"));
+                    compra[5] = rs.getString("artista");
+
+                    historial.add(compra);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al obtener historial filtrado: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return historial;
+    }
+
+    /**
+     * Verifica si un usuario tiene compras registradas
+     *
+     * @param userId ID del usuario
+     * @return true si el usuario tiene al menos una compra
+     */
+    public boolean usuarioTieneCompras(int userId) {
+        String query = "SELECT COUNT(*) as total FROM compras WHERE id_usuario = ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("total") > 0;
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al verificar compras del usuario: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+    // En tu clase Database.java, actualiza estos métodos:
+
+    /**
+     * Crea un nuevo usuario con contraseña encriptada
+     */
+    /*
+    public void createUser(String nombre, String phone, String email, String username, String password, String role) {
+        String query = "INSERT INTO Usuarios (nombre, telUser, emailUser, User, password, role) VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, nombre);
+            stmt.setString(2, phone);
+            stmt.setString(3, email);
+            stmt.setString(4, username);
+            // Encriptar la contraseña antes de guardarla
+            stmt.setString(5, PasswordUtils.encryptPassword(password));
+            stmt.setString(6, role);
+
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.err.println("Error al crear usuario: " + e.getMessage());
+            throw new RuntimeException("Error al registrar usuario", e);
+        }
+    }*/
+
+    /**
+     * Autentica un usuario comparando contraseña encriptada
+     */
+    /*
+    public boolean authenticateUser(String username, String password) {
+        String query = "SELECT password FROM Usuarios WHERE User = ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                String storedPassword = rs.getString("password");
+                // Verificar contraseña usando PasswordUtils
+                return PasswordUtils.verifyPassword(password, storedPassword);
+            }
+
+            return false;
+
+        } catch (SQLException e) {
+            System.err.println("Error al autenticar usuario: " + e.getMessage());
+            return false;
+        }
+    }*/
+
+    /**
+     * Actualiza la contraseña de un usuario (encriptada)
+     */
+    public void updateUserPassword(String username, String newPassword) {
+        String query = "UPDATE Usuarios SET password = ? WHERE User = ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, PasswordUtils.encryptPassword(newPassword));
+            stmt.setString(2, username);
+
+            int rowsAffected = stmt.executeUpdate();
+
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Usuario no encontrado");
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al actualizar contraseña: " + e.getMessage());
+            throw new RuntimeException("Error al actualizar contraseña", e);
+        }
+    }
+
+
+
+
+
+
 
 
 

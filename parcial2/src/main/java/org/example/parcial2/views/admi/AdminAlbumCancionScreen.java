@@ -2,6 +2,8 @@ package org.example.parcial2.views.admi;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -11,93 +13,111 @@ import javafx.stage.Stage;
 import org.example.parcial2.utils.Database;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
 
+/**
+ * Pantalla para mostrar las canciones de un álbum específico.
+ * Permite recibir id y nombre de álbum directamente mediante showWithAlbum().
+ */
 public class AdminAlbumCancionScreen {
 
     private final Stage stage;
-    private final Database db;
+    private final int userId;
     private final TableView<String[]> songTable;
     private final ImageView albumCoverView;
 
-    public AdminAlbumCancionScreen(Stage stage) {
+    /** Constructor con Stage + userId */
+    public AdminAlbumCancionScreen(Stage stage, int userId) {
         this.stage = stage;
-        this.db =  Database.getInstance();
+        this.userId = userId;
         this.songTable = new TableView<>();
         this.albumCoverView = new ImageView();
-        albumCoverView.setFitWidth(100);
-        albumCoverView.setFitHeight(100);
+        albumCoverView.setFitWidth(120);
+        albumCoverView.setFitHeight(120);
         albumCoverView.setPreserveRatio(true);
     }
 
-    public void show() {
-        Label label = new Label("Canciones del Álbum");
+    /** Muestra las canciones del álbum dado */
+    public void showWithAlbum(int albumId, String albumName) {
+        Label titleLabel = new Label("Álbum: " + albumName);
+        titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 18px;");
 
-        ComboBox<String[]> albumBox = new ComboBox<>(FXCollections.observableArrayList(db.getAllAlbums()));
-        albumBox.setPromptText("Seleccione un álbum");
-        albumBox.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(String[] item, boolean empty) {
-                super.updateItem(item, empty);
-                setText((item == null || empty) ? null : item[1]);
-            }
-        });
-        albumBox.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(String[] item, boolean empty) {
-                super.updateItem(item, empty);
-                setText((item == null || empty) ? null : item[1]);
-            }
-        });
-
-        Label albumLabel = new Label("Canciones del Álbum: ");
-
-        albumBox.setOnAction(e -> {
-            if (albumBox.getValue() != null) {
-                String albumName = albumBox.getValue()[1];
-                int albumId = Integer.parseInt(albumBox.getValue()[0]);
-                albumLabel.setText("Canciones del Álbum: " + albumName);
-                loadSongsForAlbum(albumId);
-                loadAlbumCover(albumId); // Cargar la portada del álbum seleccionado
-            }
-        });
-
-        // Configuración de la tabla de canciones
-        TableColumn<String[], String> idCol = new TableColumn<>("ID Canción");
-        idCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue()[0]));
+        // Tabla de canciones: {idCancion, titulo, duracion}
+        TableColumn<String[], String> idCol = new TableColumn<>("ID");
+        idCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue()[0]));
+        idCol.setPrefWidth(60);
 
         TableColumn<String[], String> tituloCol = new TableColumn<>("Título");
-        tituloCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue()[1]));
+        tituloCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue()[1]));
+        tituloCol.setPrefWidth(180);
 
         TableColumn<String[], String> duracionCol = new TableColumn<>("Duración");
-        duracionCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue()[2]));
+        duracionCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue()[2]));
+        duracionCol.setPrefWidth(100);
 
-        songTable.getColumns().addAll(idCol, tituloCol, duracionCol);
+        songTable.getColumns().setAll(idCol, tituloCol, duracionCol);
+        songTable.setPrefHeight(200);
 
-        Button backButton = new Button("Regresar");
-        backButton.setOnAction(e -> new AdminAlbumesScreen(stage).show());
+        loadSongsForAlbum(albumId);
+        loadAlbumCover(albumId);
 
-        VBox vbox = new VBox(10, label, albumBox, albumLabel, albumCoverView, songTable, backButton);
-        vbox.setStyle("-fx-padding: 20; -fx-alignment: center;");
+        Button backButton = new Button("← Regresar");
+        backButton.setOnAction(e -> new AdminAlbumesScreen(stage, userId).show());
 
-        Scene scene = new Scene(vbox, 700, 500);
-        scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
+        VBox root = new VBox(12,
+                titleLabel,
+                albumCoverView,
+                songTable,
+                backButton
+        );
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(20));
+        root.setStyle("-fx-background-color: #121212;");
+
+        Scene scene = new Scene(root, 500, 500);
+
+        // Manejo seguro del CSS
+        try {
+            scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
+        } catch (Exception e) {
+            System.err.println("No se pudo cargar el archivo CSS: " + e.getMessage());
+        }
+
         stage.setScene(scene);
-        stage.setTitle("Canciones de Álbum");
+        stage.setTitle("Canciones de \"" + albumName + "\"");
         stage.show();
     }
 
     private void loadSongsForAlbum(int albumId) {
-        ObservableList<String[]> songs = FXCollections.observableArrayList(db.getSongsByAlbumId(albumId));
-        songTable.setItems(songs);
+        try {
+            List<String[]> listaCanciones = Database.getInstance().getSongsByAlbumId(albumId);
+            ObservableList<String[]> canciones = FXCollections.observableArrayList(listaCanciones);
+            songTable.setItems(canciones);
+        } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText(null);
+            alert.setContentText("Error al cargar las canciones: " + e.getMessage());
+            alert.showAndWait();
+            e.printStackTrace();
+        }
     }
 
     private void loadAlbumCover(int albumId) {
-        byte[] imageBytes = db.getAlbumImageById(albumId);
-        if (imageBytes != null) {
-            Image albumImage = new Image(new ByteArrayInputStream(imageBytes));
-            albumCoverView.setImage(albumImage);
-        } else {
-            albumCoverView.setImage(null); // Limpia la imagen si no hay portada
+        try {
+            byte[] imageBytes = Database.getInstance().getAlbumImageById(albumId);
+            if (imageBytes != null) {
+                Image albumImg = new Image(new ByteArrayInputStream(imageBytes));
+                albumCoverView.setImage(albumImg);
+            } else {
+                albumCoverView.setImage(null);
+            }
+        } catch (Exception e) {
+            System.err.println("Error al cargar la imagen del álbum: " + e.getMessage());
+            albumCoverView.setImage(null);
         }
     }
 }
