@@ -5,12 +5,12 @@ import javafx.stage.Stage;
 import org.example.parcial2.views.LoginScreen;
 
 public class HelloApplication extends Application {
+
     @Override
     public void start(Stage primaryStage) {
-        // En lugar de primaryStage.setScene(LoginScreen.getLoginScene());
-        // Simplemente:
+        // Inicializa la pantalla de login
         LoginScreen loginScreen = new LoginScreen(primaryStage);
-        loginScreen.show();
+        loginScreen.show(); // Ahora cada Screen tiene su propio show()
     }
 
     public static void main(String[] args) {

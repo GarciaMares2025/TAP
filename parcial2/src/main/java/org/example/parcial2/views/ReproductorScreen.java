@@ -67,9 +67,9 @@ public class ReproductorScreen {
         titleLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: white;");
 
         // 4) Botones de control: Play / Pause / Stop
-        Button playBtn  = new Button("Play");
-        Button pauseBtn = new Button("Pause");
-        Button stopBtn  = new Button("Stop");
+        Button playBtn  = new Button("Iniciar");
+        Button pauseBtn = new Button("Pausar");
+        Button stopBtn  = new Button("Detener");
 
         playBtn.setOnAction(e -> mediaPlayer.play());
         pauseBtn.setOnAction(e -> mediaPlayer.pause());
@@ -139,8 +139,8 @@ public class ReproductorScreen {
         root.setPadding(new Insets(20));
         root.setStyle("-fx-background-color: #121212;");
 
-        Scene scene = new Scene(root, 700, 180);
-        scene.getStylesheets().add(getClass().getResource("/Logina.css").toExternalForm());
+        Scene scene = new Scene(root, 800, 250);
+        scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
 
         stage.setScene(scene);
         stage.setTitle("Reproductor - " + c.getTitulo());

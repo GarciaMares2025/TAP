@@ -2,124 +2,81 @@ package org.example.parcial2.views.admi;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.example.parcial2.utils.Database;
 
+import java.util.List;
+
+/**
+ * Pantalla que muestra todos los géneros musicales y permite gestionarlos.
+ */
 public class AdminGenerosScreen {
 
     private final Stage stage;
-    private final Database db;
+    private final int userId;
     private final TableView<String[]> genreTable;
 
-    public AdminGenerosScreen(Stage stage) {
+    /** Constructor principal con Stage + userId */
+    public AdminGenerosScreen(Stage stage, int userId) {
         this.stage = stage;
-        this.db = Database.getInstance();
+        this.userId = userId;
         this.genreTable = new TableView<>();
     }
 
+    /** Sobrecarga: constructor que sólo recibe Stage */
+    public AdminGenerosScreen(Stage stage) {
+        this(stage, -1);
+    }
+
+    /** Muestra la pantalla de listado de géneros */
     public void show() {
-        Label label = new Label("Administración de Géneros");
+        Label titleLabel = new Label("Listado de Géneros");
+        titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 18px;");
 
-        // Configurar la tabla de géneros
-        TableColumn<String[], Integer> idCol = new TableColumn<>("ID");
-        idCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(Integer.parseInt(cellData.getValue()[0])));
+        // Columnas: {idGenero, nombreGenero}
+        TableColumn<String[], String> idCol = new TableColumn<>("ID");
+        idCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue()[0]));
+        idCol.setPrefWidth(60);
 
-        TableColumn<String[], String> nombreCol = new TableColumn<>("Nombre del Género");
-        nombreCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue()[1]));
+        TableColumn<String[], String> nombreCol = new TableColumn<>("Género");
+        nombreCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue()[1]));
+        nombreCol.setPrefWidth(200);
 
         genreTable.getColumns().addAll(idCol, nombreCol);
+        genreTable.setPrefHeight(300);
+
         loadGenres();
 
-        // Cuadro de texto y botón para añadir un nuevo género
-        TextField nombreField = new TextField();
-        nombreField.setPromptText("Nombre del nuevo género");
+        Button backButton = new Button("← Regresar");
+        backButton.setOnAction(e -> new AdminScreen(stage, userId).show());
 
-        Button addButton = new Button("Añadir género");
-        addButton.setOnAction(e -> {
-            if (db.addGenre(nombreField.getText())) {
-                loadGenres();
-                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Género añadido exitosamente.");
-                alert.showAndWait();
-            } else {
-                Alert alert = new Alert(Alert.AlertType.ERROR, "No se pudo añadir el género.");
-                alert.showAndWait();
-            }
-            nombreField.clear();
-        });
+        VBox root = new VBox(12,
+                titleLabel,
+                genreTable,
+                backButton
+        );
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(20));
+        root.setStyle("-fx-background-color: #121212;");
 
-        // Cuadro de texto y botón para eliminar un género por ID
-        TextField idField = new TextField();
-        idField.setPromptText("ID del género a eliminar");
-
-        Button deleteButton = new Button("Eliminar género");
-        deleteButton.setOnAction(e -> {
-            try {
-                int id = Integer.parseInt(idField.getText());
-
-                // Confirmación de eliminación
-                Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION,
-                        "¿Está seguro de que desea eliminar el género con ID " + id + "?",
-                        ButtonType.YES, ButtonType.NO);
-                confirmAlert.setTitle("Confirmación de eliminación");
-                confirmAlert.setHeaderText(null);
-
-                confirmAlert.showAndWait().ifPresent(response -> {
-                    if (response == ButtonType.YES) {
-                        if (db.deleteGenreById(id)) {
-                            loadGenres();
-                            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Género eliminado exitosamente.");
-                            alert.showAndWait();
-                        } else {
-                            Alert alert = new Alert(Alert.AlertType.ERROR, "El género con el ID especificado no existe.");
-                            alert.showAndWait();
-                        }
-                    }
-                });
-
-            } catch (NumberFormatException ex) {
-                Alert alert = new Alert(Alert.AlertType.ERROR, "Por favor, ingrese un ID válido.");
-                alert.showAndWait();
-            }
-            idField.clear();
-        });
-
-        // Botón para mostrar el género más vendido
-        Button topGenreButton = new Button("Género Más Vendido");
-        topGenreButton.setOnAction(e -> showTopSellingGenre());
-
-        // Botón de regresar
-        Button backButton = new Button("Regresar");
-        backButton.setOnAction(e -> new AdminScreen(stage).show());
-
-        VBox vbox = new VBox(10, label, genreTable, nombreField, addButton, idField, deleteButton, topGenreButton, backButton);
-        vbox.setStyle("-fx-padding: 20; -fx-alignment: center;");
-
-        Scene scene = new Scene(vbox, 800, 600);
+        Scene scene = new Scene(root, 400, 500);
         scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
         stage.setScene(scene);
-        stage.setTitle("Admin - Géneros");
+        stage.setTitle("Administrar Géneros");
         stage.show();
     }
 
+    /** Carga todos los géneros desde la base de datos */
     private void loadGenres() {
-        ObservableList<String[]> genres = FXCollections.observableArrayList(db.getAllGenres());
-        genreTable.setItems(genres);
-    }
-
-    private void showTopSellingGenre() {
-        String[] topGenre = db.getTopSellingGenre();
-        if (topGenre != null) {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Género Más Vendido");
-            alert.setHeaderText("El género más vendido por ingresos:");
-            alert.setContentText("Género: " + topGenre[0] + "\nIngresos Totales: $" + topGenre[1]);
-            alert.showAndWait();
-        } else {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "No se encontraron datos.");
-            alert.showAndWait();
-        }
+        List<String[]> lista = Database.getInstance().getAllGenres();
+        ObservableList<String[]> data = FXCollections.observableArrayList(lista);
+        genreTable.setItems(data);
     }
 }

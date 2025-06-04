@@ -1,116 +1,114 @@
 package org.example.parcial2.views.admi;
 
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.example.parcial2.utils.Database;
 
+import java.util.List;
+
+/**
+ * Pantalla que muestra todos los artistas y permite gestionar información.
+ */
 public class AdminArtistasScreen {
 
     private final Stage stage;
-    private final Database db;
+    private final int userId;
     private final TableView<String[]> artistTable;
 
-    public AdminArtistasScreen(Stage stage) {
+    /** Constructor principal con Stage + userId */
+    public AdminArtistasScreen(Stage stage, int userId) {
         this.stage = stage;
-        this.db = Database.getInstance();
+        this.userId = userId;
         this.artistTable = new TableView<>();
     }
 
+    /** Sobrecarga: constructor que sólo recibe Stage */
+    public AdminArtistasScreen(Stage stage) {
+        this(stage, -1);
+    }
+
+    /** Muestra la pantalla de listado de artistas */
     public void show() {
-        Label label = new Label("Administración de Artistas");
+        Label titleLabel = new Label("Listado de Artistas");
+        titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;");
 
-        // Configurar la tabla de artistas
-        TableColumn<String[], Integer> idCol = new TableColumn<>("ID");
-        idCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(Integer.parseInt(cellData.getValue()[0])));
+        // Columnas de la tabla: {idArtista, nombreArtista, nacionalidad}
+        TableColumn<String[], String> idCol = new TableColumn<>("ID");
+        idCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue()[0]));
+        idCol.setPrefWidth(60);
 
-        TableColumn<String[], String> nombreCol = new TableColumn<>("Nombre del Artista");
-        nombreCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue()[1]));
+        TableColumn<String[], String> nombreCol = new TableColumn<>("Nombre");
+        nombreCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue()[1]));
+        nombreCol.setPrefWidth(180);
 
         TableColumn<String[], String> nacionalidadCol = new TableColumn<>("Nacionalidad");
-        nacionalidadCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue()[2]));
+        nacionalidadCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue()[2]));
+        nacionalidadCol.setPrefWidth(120);
 
+        artistTable.getColumns().clear();
         artistTable.getColumns().addAll(idCol, nombreCol, nacionalidadCol);
+        artistTable.setPrefHeight(300);
+
         loadArtists();
 
-        // Cuadro de texto y botón para añadir un nuevo artista
-        TextField nombreField = new TextField();
-        nombreField.setPromptText("Nombre del nuevo artista");
+        // Label para mostrar el total de artistas
+        Label totalLabel = new Label();
+        totalLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
+        updateTotalLabel(totalLabel);
 
-        TextField nacionalidadField = new TextField();
-        nacionalidadField.setPromptText("Nacionalidad del artista");
+        Button backButton = new Button("← Regresar");
+        backButton.setPrefSize(120, 35);
+        backButton.setOnAction(e -> new AdminScreen(stage, userId).show());
 
-        Button addButton = new Button("Añadir artista");
-        addButton.setOnAction(e -> {
-            if (db.addArtist(nombreField.getText(), nacionalidadField.getText())) {
-                loadArtists();
-                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Artista añadido exitosamente.");
-                alert.showAndWait();
-            } else {
-                Alert alert = new Alert(Alert.AlertType.ERROR, "No se pudo añadir el artista.");
-                alert.showAndWait();
-            }
-            nombreField.clear();
-            nacionalidadField.clear();
-        });
+        VBox root = new VBox(15,
+                titleLabel,
+                artistTable,
+                totalLabel,
+                backButton
+        );
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(20));
+        root.setStyle("-fx-background-color: #121212;");
 
-        // Cuadro de texto y botón para eliminar un artista por ID
-        TextField idField = new TextField();
-        idField.setPromptText("ID del artista a eliminar");
-
-        Button deleteButton = new Button("Eliminar artista");
-        deleteButton.setOnAction(e -> {
-            try {
-                int id = Integer.parseInt(idField.getText());
-
-                // Confirmación de eliminación
-                Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION,
-                        "¿Está seguro de que desea eliminar el artista con ID " + id + "?",
-                        ButtonType.YES, ButtonType.NO);
-                confirmAlert.setTitle("Confirmación de eliminación");
-                confirmAlert.setHeaderText(null);
-
-                confirmAlert.showAndWait().ifPresent(response -> {
-                    if (response == ButtonType.YES) {
-                        if (db.deleteArtistById(id)) {
-                            loadArtists();
-                            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Artista eliminado exitosamente.");
-                            alert.showAndWait();
-                        } else {
-                            Alert alert = new Alert(Alert.AlertType.ERROR, "El artista con el ID especificado no existe.");
-                            alert.showAndWait();
-                        }
-                    }
-                });
-
-            } catch (NumberFormatException ex) {
-                Alert alert = new Alert(Alert.AlertType.ERROR, "Por favor, ingrese un ID válido.");
-                alert.showAndWait();
-            }
-            idField.clear();
-        });
-
-        Button backButton = new Button("Regresar");
-        backButton.setOnAction(e -> new AdminScreen(stage).show());
-
-        VBox vbox = new VBox(10, label, artistTable, nombreField, nacionalidadField, addButton, idField, deleteButton, backButton);
-        vbox.setStyle("-fx-padding: 20; -fx-alignment: center;");
-
-        Scene scene = new Scene(vbox, 800, 600);
-        //hoja de estilos CSS
+        Scene scene = new Scene(root, 480, 550);
         scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
         stage.setScene(scene);
-        stage.setTitle("Admin - Artistas");
+        stage.setTitle("Administrar Artistas");
         stage.show();
     }
 
+    /** Carga todos los artistas desde la base de datos */
     private void loadArtists() {
-        ObservableList<String[]> artists = FXCollections.observableArrayList(db.getAllArtistsWithDetails());
-        artistTable.setItems(artists);
+        try {
+            List<String[]> lista = Database.getInstance().getAllArtists();
+            ObservableList<String[]> data = FXCollections.observableArrayList(lista);
+            artistTable.setItems(data);
+        } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText(null);
+            alert.setContentText("Error al cargar los artistas: " + e.getMessage());
+            alert.showAndWait();
+            e.printStackTrace();
+        }
     }
 
+    /** Actualiza el label con el total de artistas */
+    private void updateTotalLabel(Label label) {
+        try {
+            int total = artistTable.getItems().size();
+            label.setText("Total de artistas: " + total);
+        } catch (Exception e) {
+            label.setText("Error al obtener el total de artistas.");
+        }
+    }
 }
