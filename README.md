@@ -151,8 +151,6 @@ Aplicación de escritorio desarrollada en JavaFX que simula una plataforma music
 **Institución:** Instituto Tecnológico de Celaya  
 **Docente:** Oscar Grimaldo Aguayo  
 **Autor:** Brian Garca Mares  
-**Repositorio:** [GitHub Oficial](https://github.com/GarciaMares2025/TAP/tree/master/parcial2/src/main/resources)
-
 ---
 
 🏗️ Patrones de Diseño:
