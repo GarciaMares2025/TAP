@@ -17,12 +17,10 @@ public class ReproductorScreen {
 
     private final Stage stage;
     private final int idCancion;
-    private final int userId;        // ← Nuevo campo para saber a qué usuario regresar
+    private final int userId;       
     private MediaPlayer mediaPlayer;
 
-    /**
-     * Constructor: recibe Stage, el id de la canción a reproducir, y el userId para regresar.
-     */
+   
     public ReproductorScreen(Stage stage, int idCancion, int userId) {
         this.stage     = stage;
         this.idCancion = idCancion;
