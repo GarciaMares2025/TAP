@@ -10,9 +10,9 @@ import java.sql.SQLException;
 public class ConnectionTest {
     public static void main(String[] args) {
         // 1) Ajusta estos valores según tu configuración real de MySQL:
-        String url      = "jdbc:mysql://localhost:3306/spotify";  // Base de datos: spotify
-        String user     = "root";                                 // Usuario de MySQL
-        String password = "Hola123";                              // Contraseña real de MySQL
+        String url      = "jdbc:mysql://localhos---------";  // Base de datos: spotify
+        String user     = "-------";                                 // Usuario de MySQL
+        String password = "-------";                              // Contraseña real de MySQL
 
         Connection conn = null;
         try {
