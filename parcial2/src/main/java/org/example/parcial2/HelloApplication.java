@@ -10,7 +10,7 @@ public class HelloApplication extends Application {
     public void start(Stage primaryStage) {
         // Inicializa la pantalla de login
         LoginScreen loginScreen = new LoginScreen(primaryStage);
-        loginScreen.show(); // Ahora cada Screen tiene su propio show()
+        loginScreen.show(); 
     }
 
     public static void main(String[] args) {

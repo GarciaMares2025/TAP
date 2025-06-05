@@ -64,17 +64,12 @@ public class PasswordUtils {
         }
     }
 
-    /**
-     * Método para testing - imprime el hash de una contraseña
-     * @param password Contraseña a testear
-     */
     public static void testPassword(String password) {
         System.out.println("Contraseña original: " + password);
         System.out.println("SHA1 Hash: " + encryptPassword(password));
         System.out.println("Longitud del hash: " + encryptPassword(password).length());
     }
 
-    // Método main para testing (opcional - puedes eliminarlo en producción)
     public static void main(String[] args) {
         // Ejemplos de uso
         testPassword("password123");
