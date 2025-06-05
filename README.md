@@ -140,36 +140,8 @@ Aplicación de escritorio desarrollada en JavaFX que simula una plataforma music
 
 ---
 
-## 🛠️ Configuración y Ejecución
-
-1. **Clonar el repositorio**
-   ```bash
-   git clone https://github.com/GarciaMares2025/TAP.git
-   ```
-
-2. **Importar el proyecto** en un IDE como IntelliJ o Eclipse.
-
-3. **Configurar la base de datos MySQL**:
-   - Crear las tablas necesarias (ver script en `/resources/sql/` si disponible).
-   - Ajustar credenciales en la clase `Database.java`.
-
-4. **Ejecutar el proyecto**:
-   - Ejecutar `App.java` para lanzar la aplicación.
-
 ---
 
----
-
-## 📷 Capturas de Pantalla
-
-- Menú principal de usuario
-- Compra de canciones y álbumes
-- Reproductor multimedia
-- Panel de administrador
-- Gestión de contenido musical
-- Reportes administrativos
-
-*(ver carpeta `/screenshots` o el documento PDF del proyecto)*
 
 ---
 
