@@ -17,7 +17,7 @@ Aplicación de escritorio desarrollada en JavaFX que simula una plataforma music
 ## 🧾 Funcionalidades Principales
 
 ### 👤 Usuario
-- Registro y autenticación con contraseña encriptada (SHA-1).
+- Registro y autenticación con contraseña.
 - Compra de canciones individuales y álbumes completos.
 - Reproducción de canciones adquiridas mediante JavaFX MediaPlayer.
 - Gestión de datos personales.
