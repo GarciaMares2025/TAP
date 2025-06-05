@@ -24,7 +24,7 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
 public class Database {
     private static Database instancia;// <-- Singleton instance
-    private final String url      = "jdbc:mysql://localhost:3306/spotify";
+    private final String url      = "jdbc:mysql://localhost:----/--------";
     private final String user     = "-----";
     private final String password = "------";
 
