@@ -1,8 +1,4 @@
 package org.example.parcial2.utils;
-
-// Guarda este archivo como ConnectionTest.java en cualquier carpeta fuera de tu proyecto.
-// Solo depende de la librería del conector MySQL (mysql-connector-j).
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
