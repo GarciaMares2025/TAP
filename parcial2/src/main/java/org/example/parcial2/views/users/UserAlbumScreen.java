@@ -22,7 +22,7 @@ public class UserAlbumScreen {
     private final TableView<String[]> songTable;
     private final List<String[]> carrito;
     private final ImageView albumCoverView;
-    private final int userId; // Agregar userId como atributo
+    private final int userId; 
 
 
     public UserAlbumScreen(Stage stage,int userId) {
